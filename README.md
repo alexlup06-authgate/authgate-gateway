@@ -57,7 +57,7 @@ docker run \
   -e GATEWAY_PORT=3000 \
   -e AUTHGATE_UPSTREAM=authgate:8080 \
   -e APP_UPSTREAM=app:3000 \
-  ghcr.io/your-org/authgate-gateway:1.0.0
+  ghcr.io/authgate/authgate-gateway:1.0.0
 ```
 
 ---
