@@ -1,0 +1,21 @@
+{
+	# We terminate TLS outside or via another proxy
+	auto_https off
+}
+
+:{$GATEWAY_PORT:80} {
+
+	# ----------------------------
+	# AuthGate
+	# ----------------------------
+	route /auth/* {
+		reverse_proxy {$AUTHGATE_UPSTREAM}
+	}
+
+	# ----------------------------
+	# Application
+	# ----------------------------
+	route /* {
+		reverse_proxy {$APP_UPSTREAM}
+	}
+}
