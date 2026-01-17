@@ -3,7 +3,42 @@
 AuthGate Gateway is a small, config-driven reverse proxy used to route traffic
 between an application and AuthGate.
 
-It is based on Caddy and has **no environment-specific behavior**.
+It is based on Caddy and has no environment-specific behavior.
+
+---
+
+## How it works
+
+All HTTP traffic enters through the gateway.
+
+- /auth/* requests are forwarded to AuthGate
+- all other requests are forwarded to the application
+
+Applications redirect unauthenticated users to /auth/login.
+The gateway resolves the rest.
+
+---
+
+## Quick start (Docker)
+
+docker run \
+  -p 3000:3000 \
+  -e GATEWAY_PORT=3000 \
+  -e AUTHGATE_UPSTREAM=authgate:8080 \
+  -e APP_UPSTREAM=app:3000 \
+  ghcr.io/authgate/authgate-gateway:1.0.0
+
+---
+
+## Table of contents
+
+- Purpose
+- Routing model
+- Environment variables
+- Example (Docker Compose)
+- HTTPS / TLS
+- Design principles
+- License
 
 ---
 
@@ -18,53 +53,66 @@ The gateway ensures:
 
 ---
 
-## Routing Model
+## Routing model
 
 All traffic enters through the gateway.
 
-```
 /auth/*  → AuthGate
 /*       → Application
-```
 
 Applications must redirect unauthenticated users to:
 
-```
 /auth/login
-```
-
-The gateway resolves the rest.
 
 ---
 
-## Environment Variables
+## Environment variables
 
 The gateway is fully configured via environment variables.
 
-| Variable | Required | Description |
-|--------|----------|-------------|
-| `GATEWAY_PORT` | No | Port to listen on (default: 80) |
-| `AUTHGATE_UPSTREAM` | Yes | AuthGate upstream (e.g. `authgate:8080`) |
-| `APP_UPSTREAM` | Yes | Application upstream (e.g. `app:3000`) |
+Variable | Required | Description
+-------- | -------- | -----------
+GATEWAY_PORT | No | Port to listen on (default: 80)
+AUTHGATE_UPSTREAM | Yes | AuthGate upstream (e.g. authgate:8080)
+APP_UPSTREAM | Yes | Application upstream (e.g. app:3000)
 
 ---
 
-## Example (Docker)
+## Example (Docker Compose)
 
-```bash
-docker run \
-  -p 3000:3000 \
-  -e GATEWAY_PORT=3000 \
-  -e AUTHGATE_UPSTREAM=authgate:8080 \
-  -e APP_UPSTREAM=app:3000 \
-  ghcr.io/authgate/authgate-gateway:1.0.0
-```
+version: "3.9"
+
+services:
+  gateway:
+    image: ghcr.io/authgate/authgate-gateway:1.0.0
+    ports:
+      - "3000:3000"
+    environment:
+      GATEWAY_PORT: 3000
+      AUTHGATE_UPSTREAM: authgate:8080
+      APP_UPSTREAM: app:3000
+    depends_on:
+      - authgate
+      - app
+
+  authgate:
+    image: ghcr.io/authgate/authgate-core:1.0.0
+    ports:
+      - "8080"
+
+  app:
+    image: example/app:latest
+    ports:
+      - "3000"
+
+This example shows network wiring only.
+Application and AuthGate configuration are intentionally omitted.
 
 ---
 
 ## HTTPS / TLS
 
-AuthGate Gateway **does not terminate TLS by default**.
+AuthGate Gateway does not terminate TLS by default.
 
 HTTPS is expected to be handled by upstream infrastructure such as:
 
@@ -80,7 +128,7 @@ Caddy configuration. TLS is intentionally not enabled by default.
 
 ---
 
-## Design Principles
+## Design principles
 
 - no dev / prod modes
 - no embedded routing logic
